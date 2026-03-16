@@ -93,3 +93,23 @@ export class FacilitatorFetchError extends ResponseError {
     this.reason = reason;
   }
 }
+
+export class FacilitatorVerifyError extends ResponseError {
+  reason: string;
+
+  constructor(reason: string, message?: string) {
+    super(message || reason);
+    this.name = "FacilitatorVerifyError";
+    this.reason = reason;
+  }
+}
+
+export class FacilitatorSettleError extends ResponseError {
+  reason: string;
+
+  constructor(reason: string, message?: string) {
+    super(message || reason);
+    this.name = "FacilitatorSettleError";
+    this.reason = reason;
+  }
+}

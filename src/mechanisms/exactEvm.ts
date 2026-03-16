@@ -19,6 +19,7 @@ import {
   EvmAddressConverter,
   ZERO_ADDRESS_HEX,
   PermitValidationError,
+  SCHEMES,
 } from "../index.js";
 
 /**
@@ -37,7 +38,7 @@ export class ExactPermitEvmClientMechanism implements ClientMechanism {
   }
 
   scheme(): string {
-    return "permit402";
+    return SCHEMES.permit402;
   }
 
   async createPaymentPayload(
@@ -85,14 +86,18 @@ export class ExactPermitEvmClientMechanism implements ClientMechanism {
       verifyingContract: this.addressConverter.toEvmFormat(permitAddress),
     };
 
-    // Convert permit to EIP-712 compatible format
+    // Convert permit to EIP-712 format matching Permit402Details (meta, buyer, payment, fee - no caller)
+    // const ptype = KIND_MAP[permit.meta.kind] ?? 0;
+    // const paymentIdBytes = permit.meta.paymentId.startsWith("0x")
+    //   ? permit.meta.paymentId
+    //   : `0x${permit.meta.paymentId}`;
     const permitForSigning = {
       meta: {
         ptype: PTYPE_MAP[permit.meta.ptype],
         paymentId: permit.meta.paymentId,
         nonce: BigInt(permit.meta.nonce),
-        validAfter: permit.meta.validAfter,
-        validBefore: permit.meta.validBefore,
+        validAfter: BigInt(permit.meta.validAfter),
+        validBefore: BigInt(permit.meta.validBefore),
       },
       buyer: this.addressConverter.toEvmFormat(permit.buyer),
       payment: {

@@ -18,4 +18,6 @@ node_modules
 
 # Build & Test
 dist
-*.test.ts
+
+# env
+.env

@@ -12,7 +12,6 @@ export { ExactEvmClientMechanism } from "./nativeExactEvm.js";
 
 // exact shared types
 export {
-  SCHEME_EXACT,
   TRANSFER_AUTH_EIP712_TYPES,
   TRANSFER_AUTH_PRIMARY_TYPE,
   buildEip712Domain,

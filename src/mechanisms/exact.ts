@@ -21,6 +21,7 @@ import {
   TRON_ZERO_ADDRESS,
   paymentIdToBytes,
   PermitValidationError,
+  SCHEMES,
 } from "../index.js";
 
 /**
@@ -39,7 +40,7 @@ export class ExactPermitTronClientMechanism implements ClientMechanism {
   }
 
   scheme(): string {
-    return "permit402";
+    return SCHEMES.permit402;
   }
 
   async createPaymentPayload(
@@ -93,8 +94,8 @@ export class ExactPermitTronClientMechanism implements ClientMechanism {
         ptype: PTYPE_MAP[permit.meta.ptype],
         paymentId: permit.meta.paymentId,
         nonce: BigInt(permit.meta.nonce),
-        validAfter: permit.meta.validAfter,
-        validBefore: permit.meta.validBefore,
+        validAfter: BigInt(permit.meta.validAfter),
+        validBefore: BigInt(permit.meta.validBefore),
       },
       buyer: this.addressConverter.toEvmFormat(permit.buyer),
       payment: {

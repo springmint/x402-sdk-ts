@@ -6,10 +6,9 @@
  */
 
 import type { ClientMechanism, ClientSigner, PaymentRequirements, PaymentPayload } from "../index.js";
-import { getChainId, TronAddressConverter } from "../index.js";
+import { getChainId, SCHEMES, TronAddressConverter } from "../index.js";
 import { findByAddress } from "../tokens.js";
 import {
-  SCHEME_EXACT,
   TRANSFER_AUTH_EIP712_TYPES,
   buildEip712Domain,
   buildEip712Message,
@@ -34,7 +33,7 @@ export class ExactTronClientMechanism implements ClientMechanism {
   }
 
   scheme(): string {
-    return SCHEME_EXACT;
+    return SCHEMES.erc3009;
   }
 
   async createPaymentPayload(requirements: PaymentRequirements, resource: string): Promise<PaymentPayload> {

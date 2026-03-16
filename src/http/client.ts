@@ -9,12 +9,9 @@ import {
   PaymentRequirementsSelector,
   encodePaymentPayload,
   decodePaymentPayload,
+  PAYMENT_SIGNATURE_HEADER,
+  PAYMENT_REQUIRED_HEADER,
 } from "../index.js";
-
-/** HTTP headers for x402 protocol */
-const PAYMENT_SIGNATURE_HEADER = "PAYMENT-SIGNATURE";
-const PAYMENT_REQUIRED_HEADER = "PAYMENT-REQUIRED";
-const PAYMENT_RESPONSE_HEADER = "PAYMENT-RESPONSE";
 
 /**
  * Fetch-based HTTP client with automatic 402 payment handling
