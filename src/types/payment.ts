@@ -51,7 +51,7 @@ export interface Permit402 {
 
 /** Payment requirements from server */
 export interface PaymentRequirements {
-  /** Payment scheme (e.g., "exact", "upto") */
+  /** Payment scheme (e.g., "transfer_auth", "upto") */
   scheme: string;
   /** Network identifier (e.g., "tron:shasta", "eip155:8453") */
   network: string;

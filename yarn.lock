@@ -28,21 +28,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cppay.finance/x402@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@cppay.finance/x402@workspace:."
-  dependencies:
-    "@types/node": "npm:^20.10.0"
-    tronweb: "npm:^6.2.1"
-    typescript: "npm:^5.3.0"
-    viem: "npm:^2.46.3"
-    vitest: "npm:^1.6.1"
-  peerDependencies:
-    tronweb: ^5.0.0 || ^6.0.0
-    viem: ^2.46.3
-  languageName: unknown
-  linkType: soft
-
 "@esbuild/aix-ppc64@npm:0.21.5":
   version: 0.21.5
   resolution: "@esbuild/aix-ppc64@npm:0.21.5"
@@ -562,6 +547,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@springmint/x402@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@springmint/x402@workspace:."
+  dependencies:
+    "@types/node": "npm:^20.10.0"
+    dotenv: "npm:^16.4.5"
+    tronweb: "npm:^6.2.1"
+    typescript: "npm:^5.3.0"
+    viem: "npm:^2.46.3"
+    vitest: "npm:^1.6.1"
+  peerDependencies:
+    tronweb: ^5.0.0 || ^6.0.0
+    viem: ^2.46.3
+  languageName: unknown
+  linkType: soft
+
 "@types/estree@npm:1.0.8, @types/estree@npm:^1.0.0":
   version: 1.0.8
   resolution: "@types/estree@npm:1.0.8"
@@ -890,6 +891,13 @@ __metadata:
   version: 29.6.3
   resolution: "diff-sequences@npm:29.6.3"
   checksum: 10c0/32e27ac7dbffdf2fb0eb5a84efd98a9ad084fbabd5ac9abb8757c6770d5320d2acd172830b28c4add29bb873d59420601dfc805ac4064330ce59b1adfd0593b2
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.4.5":
+  version: 16.6.1
+  resolution: "dotenv@npm:16.6.1"
+  checksum: 10c0/15ce56608326ea0d1d9414a5c8ee6dcf0fffc79d2c16422b4ac2268e7e2d76ff5a572d37ffe747c377de12005f14b3cc22361e79fc7f1061cce81f77d2c973dc
   languageName: node
   linkType: hard
 
@@ -1386,9 +1394,9 @@ __metadata:
   linkType: hard
 
 "lru-cache@npm:^11.0.0, lru-cache@npm:^11.1.0, lru-cache@npm:^11.2.1":
-  version: 11.2.6
-  resolution: "lru-cache@npm:11.2.6"
-  checksum: 10c0/73bbffb298760e71b2bfe8ebc16a311c6a60ceddbba919cfedfd8635c2d125fbfb5a39b71818200e67973b11f8d59c5a9e31d6f90722e340e90393663a66e5cd
+  version: 11.2.7
+  resolution: "lru-cache@npm:11.2.7"
+  checksum: 10c0/549cdb59488baa617135fc12159cafb1a97f91079f35093bb3bcad72e849fc64ace636d244212c181dfdf1a99bbfa90757ff303f98561958ee4d0f885d9bd5f7
   languageName: node
   linkType: hard
 
@@ -1626,9 +1634,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ox@npm:0.14.0":
-  version: 0.14.0
-  resolution: "ox@npm:0.14.0"
+"ox@npm:0.14.5":
+  version: 0.14.5
+  resolution: "ox@npm:0.14.5"
   dependencies:
     "@adraffy/ens-normalize": "npm:^1.11.0"
     "@noble/ciphers": "npm:^1.3.0"
@@ -1643,7 +1651,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/96728af6684887faf7b380d4530bdc1a5e32b7a4d89769567aab2a458b7dda522a0be98aa7edadfae09bd953e76fcfd0f1c5780ea8c2060992d09a11d865b010
+  checksum: 10c0/229cd389a81d7388649216b6d68e65fc95efddc952450493bb275869066727c2a490a1b74946c433f24b0439552d9a31550f3edb6e5593b652fdc89f1dfecb52
   languageName: node
   linkType: hard
 
@@ -2010,15 +2018,15 @@ __metadata:
   linkType: hard
 
 "tar@npm:^7.5.4":
-  version: 7.5.10
-  resolution: "tar@npm:7.5.10"
+  version: 7.5.11
+  resolution: "tar@npm:7.5.11"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10c0/ed905e4b33886377df6e9206e5d1bd34458c21666e27943f946799416f86348c938590d573d6a69312cb29c583b122647a64ec92782f2b7e24e68d985dd72531
+  checksum: 10c0/b6bb420550ef50ef23356018155e956cd83282c97b6128d8d5cfe5740c57582d806a244b2ef0bf686a74ce526babe8b8b9061527623e935e850008d86d838929
   languageName: node
   linkType: hard
 
@@ -2054,8 +2062,8 @@ __metadata:
   linkType: hard
 
 "tronweb@npm:^6.2.1":
-  version: 6.2.1
-  resolution: "tronweb@npm:6.2.1"
+  version: 6.2.2
+  resolution: "tronweb@npm:6.2.2"
   dependencies:
     "@babel/runtime": "npm:7.26.10"
     axios: "npm:1.13.5"
@@ -2066,7 +2074,7 @@ __metadata:
     google-protobuf: "npm:3.21.4"
     semver: "npm:7.7.1"
     validator: "npm:13.15.23"
-  checksum: 10c0/60eef8458db1bb5f6ec46637d26081cf51b8ce1de4c0a1d4dbf20f4c57a4171f21eabc951a511d3a24b69a0b16b95aec5924d028201a28ff1165574fc95519c7
+  checksum: 10c0/a07021a06df90f9aac26120f1e603c6264eb2e8e5add1f822be349fff686af8b78b1982eef892b5782adb150102d8b7dbaeed9ae4f418a6bc8c5e10134468953
   languageName: node
   linkType: hard
 
@@ -2151,8 +2159,8 @@ __metadata:
   linkType: hard
 
 "viem@npm:^2.46.3":
-  version: 2.47.0
-  resolution: "viem@npm:2.47.0"
+  version: 2.47.4
+  resolution: "viem@npm:2.47.4"
   dependencies:
     "@noble/curves": "npm:1.9.1"
     "@noble/hashes": "npm:1.8.0"
@@ -2160,14 +2168,14 @@ __metadata:
     "@scure/bip39": "npm:1.6.0"
     abitype: "npm:1.2.3"
     isows: "npm:1.0.7"
-    ox: "npm:0.14.0"
+    ox: "npm:0.14.5"
     ws: "npm:8.18.3"
   peerDependencies:
     typescript: ">=5.0.4"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/6160dcd4a7b459c6cd5b12bb06a6168d5fac634a51957e0dc2032df7d35cbd15055e71f3b6fec6f133b9d5df2b7875f84ae7fabeff990118d7d87e5dbb1bbe2c
+  checksum: 10c0/c305854aed1c67892332f1fcf1c645d26c6926d4aebad359a9ebac814388440759511ab66018f42d47b200afd00396b809ac3b4f1b13e1c2c7d3ceee7a4aaa2c
   languageName: node
   linkType: hard
 

@@ -75,8 +75,12 @@ export interface FeeQuoteResponse {
   };
   /** Pricing model */
   pricing: string;
+  /** Payment scheme */
+  scheme: string;
   /** Network identifier */
   network: string;
+  /** Payment asset */
+  asset: string;
   /** Quote expiry time */
   expiresAt?: number;
 }

@@ -7,9 +7,6 @@
 
 import type { Hex } from "../address.js";
 
-/** Scheme name */
-export const SCHEME_EXACT = "transfer_auth";
-
 /** Default validity period (1 hour) */
 export const DEFAULT_VALIDITY_SECONDS = 3600;
 

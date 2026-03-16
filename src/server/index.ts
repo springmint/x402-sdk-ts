@@ -1,2 +1,2 @@
 export * from "./facilitator.js";
-export * from "./guard.js";
+export * from "./x402Server.js";

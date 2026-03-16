@@ -10,12 +10,17 @@ export * from "./types/index.js";
 export * from "./utils/index.js";
 export * from "./abi.js";
 export * from "./config.js";
+export * from "./setting.js";
 export * from "./errors.js";
 export * from "./tokens.js";
 export * from "./address.js";
 
 // HTTP Client
 export * from "./http/client.js";
+
+// Server helpers
+export * from "./server/index.js";
+export * from "./fastapi/index.js";
 
 // Mechanisms
 export * from "./mechanisms/index.js";

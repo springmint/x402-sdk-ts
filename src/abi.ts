@@ -11,7 +11,7 @@ export const PERMIT402_PRIMARY_TYPE = "Permit402Details";
 /**
  * EIP-712 Domain Type
  * Based on contract: keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
- * Note: NO version field!
+ * Domain name must be "Permit402" to match contract EIP712.sol
  */
 export const EIP712_DOMAIN_TYPE = [
   { name: "name", type: "string" },

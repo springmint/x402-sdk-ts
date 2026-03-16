@@ -1,4 +1,4 @@
-# @cppay.finance/typescript/x402
+# @springmint/typescript/x402
 
 TypeScript client SDK for the x402 payment protocol on TRON blockchain. Enable pay-per-request APIs with automatic HTTP 402 payment handling.
 
@@ -14,14 +14,14 @@ TypeScript client SDK for the x402 payment protocol on TRON blockchain. Enable p
 ## Installation
 
 ```bash
-npm i @cppay.finance/x402 tronweb
+npm i @springmint/x402 tronweb
 ```
 
 ## Quick Start
 
 ```typescript
 import TronWeb from "tronweb";
-import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@cppay.finance/x402";
+import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@springmint/x402";
 
 // 1. Initialize TronWeb
 const tronWeb = new TronWeb({
@@ -59,7 +59,7 @@ When you make a request to a protected resource:
 - **`X402Client`** - Core payment client that manages payment mechanisms
 - **`X402FetchClient`** - HTTP client wrapper with automatic 402 handling
 - **`TronClientSigner`** - Signs payment permits using TIP-712
-- **`ExactTronClientMechanism`** - Implements the "exact" payment scheme for TRON
+- **`ExactTronClientMechanism`** - Implements the "transfer_auth" payment scheme for TRON
 
 ## API Reference
 
@@ -188,7 +188,7 @@ await signer.ensureAllowance(tokenAddress, BigInt(1000000), "tron:nile", "auto")
 
 ### ExactTronClientMechanism
 
-Payment mechanism implementing the "exact" scheme for TRON.
+Payment mechanism implementing the "transfer_auth" scheme for TRON.
 
 ```typescript
 const mechanism = new ExactTronClientMechanism(signer);
@@ -200,7 +200,7 @@ const mechanism = new ExactTronClientMechanism(signer);
 
 ```typescript
 import TronWeb from "tronweb";
-import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@cppay.finance/x402";
+import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@springmint/x402";
 
 const tronWeb = new TronWeb({
   fullHost: "https://nile.trongrid.io",
@@ -221,7 +221,7 @@ console.log(weather);
 
 ```typescript
 import TronWeb from "tronweb";
-import { X402Client, ExactTronClientMechanism, TronClientSigner, encodePaymentPayload } from "@cppay.finance/x402";
+import { X402Client, ExactTronClientMechanism, TronClientSigner, encodePaymentPayload } from "@springmint/x402";
 
 const tronWeb = new TronWeb({ fullHost: "https://nile.trongrid.io", privateKey: process.env.TRON_PRIVATE_KEY });
 const signer = TronClientSigner.withPrivateKey(tronWeb, process.env.TRON_PRIVATE_KEY, "nile");
@@ -256,7 +256,7 @@ if (response.status === 402) {
 ### Custom Payment Selection
 
 ```typescript
-import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@cppay.finance/x402";
+import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@springmint/x402";
 
 // Custom selector function
 const selector = (requirements) => {
@@ -272,7 +272,7 @@ const response = await client.get("https://api.example.com/data");
 
 ```typescript
 // In browser with TronLink wallet
-import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@cppay.finance/x402";
+import { X402Client, X402FetchClient, ExactTronClientMechanism, TronClientSigner } from "@springmint/x402";
 
 // Wait for TronLink
 const tronWeb = window.tronWeb;
@@ -308,7 +308,7 @@ const nileClient = new X402Client()
 
 ### Exact Scheme
 
-The `exact` scheme allows payments for a specified exact amount. Useful for:
+The `transfer_auth` scheme allows payments for a specified exact amount. Useful for:
 
 - Pay-per-use APIs (e.g., LLM token generation)
 - Fixed-price resources

@@ -42,7 +42,7 @@ export const PERMIT402_ADDRESSES: Record<string, string> = {
 /** Default RPC URLs for EVM networks */
 export const EVM_RPC_URLS: Record<string, string> = {
   "eip155:97": "https://data-seed-prebsc-2-s2.bnbchain.org:8545",
-  "eip155:56": "https://bsc-dataseed.binance.org",
+  "eip155:56": "https://rpc-bsc.48.club",
   // 'eip155:1': 'https://eth.llamarpc.com',
 };
 
@@ -120,3 +120,7 @@ export function getZeroAddress(network: string): string {
   if (isTronNetwork(network)) return TRON_ZERO_ADDRESS;
   throw new UnsupportedNetworkError(`Unsupported network: ${network}`);
 }
+
+export const PAYMENT_SIGNATURE_HEADER = "PAYMENT-SIGNATURE";
+export const PAYMENT_REQUIRED_HEADER = "PAYMENT-REQUIRED";
+export const JSON_CONTENT_TYPE = "application/json";
