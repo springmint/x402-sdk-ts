@@ -32,9 +32,9 @@ export const NETWORKS = {
 
 /** Permit402 contract addresses */
 export const PERMIT402_ADDRESSES: Record<string, string> = {
-  "tron:mainnet": "",
-  "tron:shasta": "",
-  "tron:nile": "",
+  "tron:mainnet": "TK5kfgbNK5B5sFWSbtDs2HyCaSUuEzfN2B",
+  "tron:shasta": "TSNfGRDkyyDY4dHsWzQ6rWWG63p9iczz1k",
+  "tron:nile": "TRK2rYmbyFZKcPTDREEF36rEsLfDWZXnjA",
   "eip155:97": "",
   "eip155:56": "0x105a6f4613a1d1c17ef35d4d5f053fa2e659a958",
 };
