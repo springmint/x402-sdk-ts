@@ -32,17 +32,17 @@ export const NETWORKS = {
 
 /** Permit402 contract addresses */
 export const PERMIT402_ADDRESSES: Record<string, string> = {
-  "tron:mainnet": "",
-  "tron:shasta": "",
-  "tron:nile": "",
+  "tron:mainnet": "TK5kfgbNK5B5sFWSbtDs2HyCaSUuEzfN2B",
+  "tron:shasta": "TSNfGRDkyyDY4dHsWzQ6rWWG63p9iczz1k",
+  "tron:nile": "TRK2rYmbyFZKcPTDREEF36rEsLfDWZXnjA",
   "eip155:97": "",
   "eip155:56": "0x105a6f4613a1d1c17ef35d4d5f053fa2e659a958",
 };
 
 /** Default RPC URLs for EVM networks */
-export const EVM_RPC_URLS: Record<string, string> = {
-  "eip155:97": "https://data-seed-prebsc-2-s2.bnbchain.org:8545",
-  "eip155:56": "https://rpc-bsc.48.club",
+export const EVM_RPC_URLS: Record<string, string | string[]> = {
+  "eip155:97": ["https://data-seed-prebsc-2-s2.bnbchain.org:8545", "https://bsc-testnet-rpc.publicnode.com"],
+  "eip155:56": ["https://bsc-dataseed.binance.org", "https://rpc-bsc.48.club"],
   // 'eip155:1': 'https://eth.llamarpc.com',
 };
 
@@ -53,12 +53,43 @@ export const TRON_RPC_URLS: Record<string, string> = {
   "tron:nile": "https://nile.trongrid.io",
 };
 
+/** Optional RPC override map type */
+export type RpcUrlMap = Record<string, string | string[]>;
+
+/** Normalize any RPC URL input into a de-duplicated array */
+function normalizeRpcUrls(input?: string | string[]): string[] {
+  if (!input) return [];
+  const values = Array.isArray(input) ? input : [input];
+  const unique: string[] = [];
+
+  for (const value of values) {
+    const url = value.trim();
+    if (!url) continue;
+    if (!unique.includes(url)) {
+      unique.push(url);
+    }
+  }
+
+  return unique;
+}
+
+/**
+ * Resolve all available RPC URLs for a network.
+ * Priority: caller overrides first, built-in defaults second.
+ */
+export function resolveRpcUrls(network: string, overrides?: RpcUrlMap): string[] {
+  const customUrls = normalizeRpcUrls(overrides?.[network]);
+  const defaultUrl = EVM_RPC_URLS[network] ?? TRON_RPC_URLS[network];
+  const defaultUrls = normalizeRpcUrls(defaultUrl);
+  return [...customUrls, ...defaultUrls.filter((url) => !customUrls.includes(url))];
+}
+
 /**
  * Resolve a network identifier to an RPC URL.
  * Returns the URL from the built-in map, or undefined if not configured.
  */
 export function resolveRpcUrl(network: string): string | undefined {
-  return EVM_RPC_URLS[network] ?? TRON_RPC_URLS[network];
+  return resolveRpcUrls(network)[0];
 }
 
 /** Zero address for TRON */

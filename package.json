@@ -29,7 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "yarn clean && tsc",
     "clean": "rm -rf dist",
     "test": "vitest run"
   },

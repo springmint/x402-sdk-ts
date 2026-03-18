@@ -48,10 +48,10 @@ export class SufficientBalancePolicy implements PaymentPolicy {
       let balance: bigint;
       try {
         balance = await signer.checkBalance(req.asset, req.network);
-      } catch {
-        // Signer cannot query this network; keep the requirement.
-        affordable.push(req);
-        continue;
+      } catch (error) {
+        throw new Error(
+          `Failed to query balance via RPC for ${req.scheme} on ${req.network}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
 
       let needed = BigInt(req.amount);

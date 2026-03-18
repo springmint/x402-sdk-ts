@@ -6,6 +6,7 @@ import {
   createWalletClient,
   createPublicClient,
   http,
+  fallback,
   type WalletClient,
   type PublicClient,
   type Account,
@@ -19,7 +20,8 @@ import { mainnet, sepolia, bsc, bscTestnet } from "viem/chains";
 import type { ClientSigner } from "../client/x402Client.js";
 import {
   getPermit402Address,
-  resolveRpcUrl,
+  resolveRpcUrls,
+  type RpcUrlMap,
   InsufficientAllowanceError,
   UnsupportedNetworkError,
 } from "../index.js";
@@ -34,10 +36,23 @@ export class EvmClientSigner implements ClientSigner {
   private walletClient: WalletClient<Transport, Chain, Account>;
   private publicClients: Map<number, PublicClient> = new Map();
   private account: Account;
+  private rpcUrl?: string;
+  private rpcUrls?: string[];
+  private rpcByNetwork?: RpcUrlMap;
 
-  constructor(privateKey: string) {
+  constructor(
+    privateKey: string,
+    options?: {
+      rpcUrl?: string;
+      rpcUrls?: string[];
+      rpcByNetwork?: RpcUrlMap;
+    },
+  ) {
     const hexKey = privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`;
     this.account = privateKeyToAccount(hexKey as Hex);
+    this.rpcUrl = options?.rpcUrl;
+    this.rpcUrls = options?.rpcUrls;
+    this.rpcByNetwork = options?.rpcByNetwork;
     this.walletClient = createWalletClient({
       account: this.account,
       chain: mainnet,
@@ -82,16 +97,12 @@ export class EvmClientSigner implements ClientSigner {
     const chainId = this.parseNetworkToChainId(network);
     const client = this.getPublicClient(chainId, network);
 
-    try {
-      return await client.readContract({
-        address: token as Hex,
-        abi: ERC20_ABI,
-        functionName: "balanceOf",
-        args: [this.account.address],
-      });
-    } catch {
-      return 0n;
-    }
+    return await client.readContract({
+      address: token as Hex,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [this.account.address],
+    });
   }
 
   async checkAllowance(token: string, _amount: bigint, network: string): Promise<bigint> {
@@ -99,16 +110,12 @@ export class EvmClientSigner implements ClientSigner {
     const client = this.getPublicClient(chainId, network);
     const spender = getPermit402Address(network) as Hex;
 
-    try {
-      return await client.readContract({
-        address: token as Hex,
-        abi: ERC20_ABI,
-        functionName: "allowance",
-        args: [this.account.address, spender],
-      });
-    } catch {
-      return 0n;
-    }
+    return await client.readContract({
+      address: token as Hex,
+      abi: ERC20_ABI,
+      functionName: "allowance",
+      args: [this.account.address, spender],
+    });
   }
 
   async ensureAllowance(
@@ -132,11 +139,11 @@ export class EvmClientSigner implements ClientSigner {
     const chain = this.getChain(chainId);
 
     try {
-      const rpcUrl = resolveRpcUrl(network);
+      const transport = this.createTransport(network);
       const walletClient = createWalletClient({
         account: this.account,
         chain: chain,
-        transport: http(rpcUrl),
+        transport,
       });
 
       const hash = await walletClient.writeContract({
@@ -159,14 +166,41 @@ export class EvmClientSigner implements ClientSigner {
   private getPublicClient(chainId: number, network: string): PublicClient {
     let client = this.publicClients.get(chainId);
     if (!client) {
-      const rpcUrl = resolveRpcUrl(network);
+      const transport = this.createTransport(network);
       client = createPublicClient({
         chain: this.getChain(chainId),
-        transport: http(rpcUrl),
+        transport,
       });
       this.publicClients.set(chainId, client);
     }
     return client;
+  }
+
+  private createTransport(network: string): Transport {
+    const candidates = this.getRpcCandidates(network);
+    if (candidates.length === 0) {
+      throw new UnsupportedNetworkError(`No RPC URL configured for network: ${network}`);
+    }
+
+    if (candidates.length === 1) {
+      return http(candidates[0]);
+    }
+
+    return fallback(
+      candidates.map((url) => http(url)),
+      { rank: false, retryCount: 1 },
+    );
+  }
+
+  private getRpcCandidates(network: string): string[] {
+    const perNetwork = this.rpcByNetwork?.[network];
+    const perNetworkList = Array.isArray(perNetwork) ? perNetwork : perNetwork ? [perNetwork] : [];
+    const globalList = this.rpcUrls?.length ? this.rpcUrls : this.rpcUrl ? [this.rpcUrl] : [];
+    const overrides: RpcUrlMap = {
+      ...(this.rpcByNetwork ?? {}),
+      [network]: [...perNetworkList, ...globalList],
+    };
+    return resolveRpcUrls(network, overrides);
   }
 
   private getChain(chainId: number): Chain {
