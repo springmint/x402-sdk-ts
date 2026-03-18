@@ -298,6 +298,31 @@ const nileClient = new X402Client()
   .register("tron:mainnet", new ExactTronClientMechanism(mainnetSigner));
 ```
 
+### Custom RPC (Optional)
+
+By default, signers use built-in RPC endpoints, so you do not need to pass RPC manually.
+If you want better reliability, you can provide custom RPC endpoints (single, multiple, or per-network).
+
+```typescript
+import { EvmClientSigner, TronClientSigner } from "@springmint/x402";
+
+const evmSigner = new EvmClientSigner(process.env.EVM_PRIVATE_KEY!, {
+  rpcUrl: "https://my-global-rpc.example", // global fallback
+  rpcUrls: ["https://my-backup-rpc-1.example", "https://my-backup-rpc-2.example"],
+  rpcByNetwork: {
+    "eip155:56": ["https://bsc-primary.example", "https://bsc-backup.example"],
+    "eip155:1": "https://eth-primary.example",
+  },
+});
+
+const tronSigner = new TronClientSigner(process.env.TRON_PRIVATE_KEY!, {
+  rpcUrl: "https://my-tron-rpc.example",
+  rpcByNetwork: {
+    "tron:mainnet": ["https://tron-mainnet-1.example", "https://tron-mainnet-2.example"],
+  },
+});
+```
+
 ## Supported Networks
 
 - **TRON Mainnet** - `tron:mainnet`
