@@ -1,5 +1,5 @@
 /**
- * ExactPermitTronClientMechanism - TRON client mechanism for "permit402" payment scheme
+ * Permit402TronClientMechanism - TRON client mechanism for "permit402" payment scheme
  *
  * Uses TIP-712 (TRON's EIP-712 implementation) for signing Permit402.
  */
@@ -19,7 +19,6 @@ import {
   getPermit402Address,
   TronAddressConverter,
   TRON_ZERO_ADDRESS,
-  paymentIdToBytes,
   PermitValidationError,
   SCHEMES,
 } from "../index.js";
@@ -27,7 +26,7 @@ import {
 /**
  * TRON client mechanism for "permit402" payment scheme
  */
-export class ExactPermitTronClientMechanism implements ClientMechanism {
+export class Permit402TronClientMechanism implements ClientMechanism {
   private signer: ClientSigner;
   private addressConverter = new TronAddressConverter();
 

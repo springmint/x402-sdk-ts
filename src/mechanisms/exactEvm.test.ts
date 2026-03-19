@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { ExactPermitEvmClientMechanism } from "./exactEvm.js";
+import { Permit402EvmClientMechanism } from "./exactEvm.js";
 import { EvmClientSigner } from "../signers/evmSigner.js";
 import { PermitValidationError } from "../errors.js";
 import { SCHEMES } from "../setting.js";
 
-describe("ExactPermitEvmClientMechanism", () => {
+describe("Permit402EvmClientMechanism", () => {
   const privateKey = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   const signer = new EvmClientSigner(privateKey);
-  const mechanism = new ExactPermitEvmClientMechanism(signer);
+  const mechanism = new Permit402EvmClientMechanism(signer);
 
   const requirements = {
     scheme: SCHEMES.permit402,

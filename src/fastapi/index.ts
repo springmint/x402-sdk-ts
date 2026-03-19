@@ -1,1 +1,1 @@
-export { X402Middleware, x402_protected } from "./middleware.js";
+export { X402Middleware, x402Protected, x402_protected, express_middleware, expressMiddleware } from "./middleware.js";

@@ -125,7 +125,10 @@ export class X402Server {
       return supported;
     }
 
-    const feeQuotes = (await this.facilitator.feeQuote(permitReqs)) ?? [];
+    const feeQuotes = await this.facilitator.feeQuote(permitReqs);
+    if (!Array.isArray(feeQuotes)) {
+      throw new Error("Facilitator feeQuote returned invalid response");
+    }
     const quoteMap = new Map<string, (typeof feeQuotes)[number]>();
     for (const quote of feeQuotes) {
       quoteMap.set(`${quote.scheme}|${quote.network}|${quote.asset}`.toLowerCase(), quote);

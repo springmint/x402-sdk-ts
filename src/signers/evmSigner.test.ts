@@ -16,6 +16,18 @@ describe("EvmClientSigner", () => {
     expect(signer.getAddress().toLowerCase()).toBe(expectedAddress.toLowerCase());
   });
 
+  it("should accept custom rpc options", () => {
+    const signer = new EvmClientSigner(privateKey, {
+      rpcUrl: "https://custom.rpc.example",
+      rpcUrls: ["https://backup-1.rpc.example", "https://backup-2.rpc.example"],
+      rpcByNetwork: {
+        "eip155:56": ["https://bsc-primary.rpc.example", "https://bsc-backup.rpc.example"],
+      },
+    });
+
+    expect(signer.getAddress().toLowerCase()).toBe(expectedAddress.toLowerCase());
+  });
+
   it("should sign a message", async () => {
     const signer = new EvmClientSigner(privateKey);
     const message = new TextEncoder().encode("hello world");

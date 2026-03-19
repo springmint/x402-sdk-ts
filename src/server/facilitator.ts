@@ -33,17 +33,34 @@ class Facilitator {
     }
   }
 
-  async feeQuote(
-    accepts: PaymentRequirements[],
-    context?: Record<string, unknown>,
-  ): Promise<FeeQuoteResponse[] | null> {
-    return await this.#request("/fee/quote", {
+  async feeQuote(accepts: PaymentRequirements[], context?: Record<string, unknown>): Promise<FeeQuoteResponse[]> {
+    const response = await this.#request<
+      FeeQuoteResponse[] | { quotes?: FeeQuoteResponse[]; data?: FeeQuoteResponse[] } | null
+    >("/fee/quote", {
       method: "POST",
       body: JSON.stringify({ accepts, permit402Context: context }),
     });
+
+    if (response == null) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (Array.isArray(response.quotes)) {
+      return response.quotes;
+    }
+
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    throw new FacilitatorFetchError('Request "/fee/quote" failed, invalid response format');
   }
 
-  async supported(): Promise<SupportedResponse | null> {
+  async supported(): Promise<SupportedResponse> {
     return await this.#request("/supported", { method: "GET" });
   }
 

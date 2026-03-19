@@ -12,7 +12,8 @@ import {
   SignatureCreationError,
   InsufficientAllowanceError,
   UnsupportedNetworkError,
-  TRON_RPC_URLS,
+  resolveRpcUrls,
+  type RpcUrlMap,
 } from "../index.js";
 import { TronWeb as TronWebClass } from "tronweb";
 import type { TronWeb, TypedDataDomain, TypedDataField } from "./types.js";
@@ -28,12 +29,25 @@ export class TronClientSigner implements ClientSigner {
   private privateKey: string;
   private address: string; // Base58 format
   private tronWebInstances: Map<string, TronWeb> = new Map();
+  private rpcUrl?: string;
+  private rpcUrls?: string[];
+  private rpcByNetwork?: RpcUrlMap;
 
-  constructor(privateKey: string) {
+  constructor(
+    privateKey: string,
+    options?: {
+      rpcUrl?: string;
+      rpcUrls?: string[];
+      rpcByNetwork?: RpcUrlMap;
+    },
+  ) {
     const cleanKey = privateKey.startsWith("0x") ? privateKey.slice(2) : privateKey;
     this.privateKey = cleanKey;
+    this.rpcUrl = options?.rpcUrl;
+    this.rpcUrls = options?.rpcUrls;
+    this.rpcByNetwork = options?.rpcByNetwork;
     // Derive address using a temporary TronWeb instance (pure crypto, no network needed)
-    const tw = this.createTronWeb("https://nile.trongrid.io");
+    const tw = this.getDefaultTronWeb();
     this.address = tw.address.fromPrivateKey(cleanKey);
   }
 
@@ -41,26 +55,63 @@ export class TronClientSigner implements ClientSigner {
    * Get or create a TronWeb instance for the given network.
    */
   private getTronWeb(network?: string): TronWeb {
-    const host = network ? TRON_RPC_URLS[network] : undefined;
-    const key = host ?? "__default__";
-    let tw = this.tronWebInstances.get(key);
+    const host = this.getRpcCandidates(network)[0];
+    if (!host) {
+      throw new UnsupportedNetworkError(`No RPC URL configured for network: ${network}`);
+    }
+    return this.getOrCreateTronWeb(host);
+  }
+
+  private getDefaultTronWeb(): TronWeb {
+    const host = this.getRpcCandidates("tron:nile")[0] ?? "https://nile.trongrid.io";
+    return this.getOrCreateTronWeb(host);
+  }
+
+  private getOrCreateTronWeb(host: string): TronWeb {
+    let tw = this.tronWebInstances.get(host);
     if (!tw) {
-      if (!host) {
-        throw new UnsupportedNetworkError(`No RPC URL configured for network: ${network}`);
-      }
       tw = this.createTronWeb(host);
-      this.tronWebInstances.set(key, tw);
+      this.tronWebInstances.set(host, tw);
     }
     return tw;
   }
 
-  private getDefaultTronWeb(): TronWeb {
-    let tw = this.tronWebInstances.get("__default__");
-    if (!tw) {
-      tw = this.createTronWeb("https://nile.trongrid.io");
-      this.tronWebInstances.set("__default__", tw);
+  private getRpcCandidates(network?: string): string[] {
+    if (!network) {
+      const global = this.rpcUrls?.length ? this.rpcUrls : this.rpcUrl ? [this.rpcUrl] : [];
+      const deduped = global.filter((url, index) => global.indexOf(url) === index);
+      return deduped.length > 0 ? deduped : ["https://nile.trongrid.io"];
     }
-    return tw;
+
+    const perNetwork = this.rpcByNetwork?.[network];
+    const perNetworkList = Array.isArray(perNetwork) ? perNetwork : perNetwork ? [perNetwork] : [];
+    const globalList = this.rpcUrls?.length ? this.rpcUrls : this.rpcUrl ? [this.rpcUrl] : [];
+    const overrides: RpcUrlMap = {
+      ...(this.rpcByNetwork ?? {}),
+      [network]: [...perNetworkList, ...globalList],
+    };
+    return resolveRpcUrls(network, overrides);
+  }
+
+  private async executeWithRpcFallback<T>(network: string, action: (tw: TronWeb) => Promise<T>): Promise<T> {
+    const candidates = this.getRpcCandidates(network);
+    if (candidates.length === 0) {
+      throw new UnsupportedNetworkError(`No RPC URL configured for network: ${network}`);
+    }
+
+    let lastError: unknown;
+    for (const host of candidates) {
+      const tw = this.getOrCreateTronWeb(host);
+      try {
+        return await action(tw);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw new Error(
+      `All RPC endpoints failed for ${network}: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    );
   }
 
   private createTronWeb(fullHost: string): TronWeb {
@@ -113,10 +164,9 @@ export class TronClientSigner implements ClientSigner {
   }
 
   async checkBalance(token: string, network: string): Promise<bigint> {
-    try {
-      const ownerHex = toEvmHex(this.address);
+    const ownerHex = toEvmHex(this.address);
 
-      const tw = this.getTronWeb(network);
+    return this.executeWithRpcFallback(network, async (tw) => {
       const result = await tw.transactionBuilder.triggerConstantContract(
         token,
         "balanceOf(address)",
@@ -128,21 +178,18 @@ export class TronClientSigner implements ClientSigner {
       if (result.result?.result && result.constant_result?.length) {
         return BigInt("0x" + result.constant_result[0]);
       }
-    } catch {
-      // balance check failed
-    }
 
-    return BigInt(0);
+      throw new Error(`checkBalance failed for ${token} on ${network}: no result from RPC`);
+    });
   }
 
   async checkAllowance(token: string, _amount: bigint, network: string): Promise<bigint> {
     const spender = getPermit402Address(network);
 
-    try {
-      const ownerHex = toEvmHex(this.address);
-      const spenderHex = toEvmHex(spender);
+    const ownerHex = toEvmHex(this.address);
+    const spenderHex = toEvmHex(spender);
 
-      const tw = this.getTronWeb(network);
+    return this.executeWithRpcFallback(network, async (tw) => {
       const result = await tw.transactionBuilder.triggerConstantContract(
         token,
         ERC20_ALLOWANCE_SELECTOR,
@@ -157,11 +204,9 @@ export class TronClientSigner implements ClientSigner {
       if (result.result?.result && result.constant_result?.length) {
         return BigInt("0x" + result.constant_result[0]);
       }
-    } catch {
-      // allowance check failed
-    }
 
-    return BigInt(0);
+      throw new Error(`checkAllowance failed for ${token} on ${network}: no result from RPC`);
+    });
   }
 
   async ensureAllowance(
@@ -191,54 +236,60 @@ export class TronClientSigner implements ClientSigner {
     const maxUint160 = BigInt(2) ** BigInt(160) - BigInt(1);
 
     try {
-      // Build approve transaction
-      const tw = this.getTronWeb(network);
-      const tx = await tw.transactionBuilder.triggerSmartContract(
-        token,
-        ERC20_APPROVE_SELECTOR,
-        {
-          feeLimit: 100_000_000,
-          callValue: 0,
-        },
-        [
-          { type: "address", value: spenderHex },
-          { type: "uint256", value: maxUint160.toString() },
-        ],
-        this.address,
-      );
+      return await this.executeWithRpcFallback(network, async (tw) => {
+        // Build approve transaction
+        const tx = await tw.transactionBuilder.triggerSmartContract(
+          token,
+          ERC20_APPROVE_SELECTOR,
+          {
+            feeLimit: 100_000_000,
+            callValue: 0,
+          },
+          [
+            { type: "address", value: spenderHex },
+            { type: "uint256", value: maxUint160.toString() },
+          ],
+          this.address,
+        );
 
-      if (!tx.result?.result) {
-        throw new InsufficientAllowanceError("Failed to build approve transaction");
-      }
-
-      // Sign transaction
-      const signedTx = await tw.trx.sign(tx.transaction, this.privateKey);
-
-      // Broadcast transaction
-      const broadcast = await tw.trx.sendRawTransaction(signedTx);
-
-      if (!broadcast.result) {
-        throw new InsufficientAllowanceError(`Failed to broadcast approve transaction: ${JSON.stringify(broadcast)}`);
-      }
-
-      // Approve transaction sent
-
-      // Wait for confirmation (poll for ~30 seconds)
-      const txid = broadcast.txid;
-      for (let i = 0; i < 10; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        try {
-          const info = await tw.trx.getTransactionInfo(txid);
-          if (info && info.blockNumber) {
-            return info.receipt?.result === "SUCCESS";
-          }
-        } catch {
-          // Not confirmed yet, continue polling
+        if (!tx.result?.result) {
+          throw new InsufficientAllowanceError("Failed to build approve transaction");
         }
-      }
 
-      // Approve transaction not confirmed within timeout, assuming success
-      return true;
+        // Sign transaction
+        const signedTx = await tw.trx.sign(tx.transaction, this.privateKey);
+
+        // Broadcast transaction
+        const broadcast = await tw.trx.sendRawTransaction(signedTx);
+
+        if (!broadcast.result) {
+          throw new InsufficientAllowanceError(`Failed to broadcast approve transaction: ${JSON.stringify(broadcast)}`);
+        }
+
+        // Wait for confirmation (poll for ~30 seconds)
+        const txid = broadcast.txid;
+        for (let i = 0; i < 10; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          try {
+            const info = await tw.trx.getTransactionInfo(txid);
+            if (info && info.blockNumber) {
+              if (info.receipt?.result === "SUCCESS") {
+                return true;
+              }
+              throw new InsufficientAllowanceError(
+                `Approve transaction failed on-chain for tx ${txid}: ${info.receipt?.result ?? "UNKNOWN"}`,
+              );
+            }
+          } catch (error) {
+            if (error instanceof InsufficientAllowanceError) {
+              throw error;
+            }
+            // Not confirmed yet, continue polling
+          }
+        }
+
+        throw new InsufficientAllowanceError(`Approve transaction not confirmed within timeout: ${txid}`);
+      });
     } catch (error) {
       if (error instanceof InsufficientAllowanceError) throw error;
       throw new InsufficientAllowanceError(

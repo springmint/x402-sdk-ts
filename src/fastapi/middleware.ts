@@ -1,9 +1,10 @@
+import type { RequestHandler, Response as ExpressResponse } from "express";
 import { decodePaymentPayload, encodePaymentPayload } from "../utils/encoding.js";
 import { JSON_CONTENT_TYPE, PAYMENT_REQUIRED_HEADER, PAYMENT_SIGNATURE_HEADER } from "../config.js";
 import { getToken } from "../tokens.js";
 import { PAYMENT_ONLY, ResourceConfig, type X402Server } from "../server/x402Server.js";
 import type { PaymentPayload, PaymentRequirements } from "../types/payment.js";
-import { FacilitatorVerifyError } from "../errors.js";
+import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 
 export const PAYMENT_RESPONSE_HEADER = "PAYMENT-RESPONSE";
 
@@ -26,7 +27,7 @@ export interface TransactionVerifier {
 }
 
 export interface MiddlewareRequestLike {
-  headers?: RequestInit["headers"];
+  headers?: Headers | IncomingHttpHeaders;
   url?: string | URL;
 }
 
@@ -130,10 +131,7 @@ export class X402Middleware {
           console.log("[x402] verifyPayment result:", verifyed);
         } catch (error) {
           console.error("[x402] verifyPayment threw:", error);
-          return this.jsonResponse(
-            { error: `Verify request failed: ${(error as Error).message}` },
-            500,
-          );
+          return this.jsonResponse({ error: `Verify request failed: ${(error as Error).message}` }, 500);
         }
         if (!verifyed.isValid) {
           console.error("[x402] Verify failed:", verifyed.invalidReason);
@@ -149,10 +147,7 @@ export class X402Middleware {
           console.log("[x402] settlePayment result:", settleResult);
         } catch (error) {
           console.error("[x402] settlePayment threw:", error);
-          return this.jsonResponse(
-            { error: `Settlement request failed: ${(error as Error).message}` },
-            500,
-          );
+          return this.jsonResponse({ error: `Settlement request failed: ${(error as Error).message}` }, 500);
         }
         if (!settleResult.success) {
           console.error("[x402] Settlement failed:", settleResult.errorReason);
@@ -275,7 +270,7 @@ export class X402Middleware {
     return response;
   }
 
-  private readHeader(headers: RequestInit["headers"] | undefined, key: string): string | null {
+  private readHeader(headers: Headers | IncomingHttpHeaders | undefined, key: string): string | null {
     if (!headers) {
       return null;
     }
@@ -315,7 +310,7 @@ export class X402Middleware {
   }
 }
 
-export function x402_protected(
+export function x402Protected(
   server: X402Server,
   prices: string[],
   schemes: string[],
@@ -332,4 +327,94 @@ export function x402_protected(
     options?.valid_for ?? 3600,
     options?.delivery_mode ?? PAYMENT_ONLY,
   );
+}
+
+export function x402_protected(
+  server: X402Server,
+  prices: string[],
+  schemes: string[],
+  network: string,
+  pay_to: string,
+  options?: { valid_for?: number; delivery_mode?: string; verifiers?: Map<string, TransactionVerifier> },
+) {
+  return x402Protected(server, prices, schemes, network, pay_to, options);
+}
+
+/**
+ * 把 Express req 转成 Fetch Request
+ */
+async function toFetchRequest(req: any): Promise<Request> {
+  const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+
+  // 关键：缓存 body，避免 stream 被消费
+  let body: Buffer | undefined;
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    body = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      req.on("data", (chunk: Buffer) => chunks.push(chunk));
+      req.on("end", () => resolve(Buffer.concat(chunks)));
+      req.on("error", reject);
+    });
+  }
+
+  return new Request(url, {
+    method: req.method,
+    headers: req.headers as any,
+    body: body,
+  });
+}
+
+async function writeFetchResponse(res: ExpressResponse, response: Response) {
+  res.status(response.status);
+
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value);
+  });
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  res.send(buffer);
+}
+
+export function expressMiddleware(
+  server: any,
+  prices: string[],
+  schemes: string[],
+  network: string,
+  payTo: string,
+): RequestHandler {
+  const protectedFn = x402Protected(server, prices, schemes, network, payTo);
+
+  return async (req, res, next) => {
+    try {
+      const fetchReq = await toFetchRequest(req);
+      const response = await protectedFn(async () => {
+        return new Response(null, { status: 200 });
+      })(fetchReq);
+
+      if (response.status === 402) {
+        await writeFetchResponse(res, response);
+        return;
+      }
+
+      const paymentHeader = response.headers.get(PAYMENT_RESPONSE_HEADER);
+      if (paymentHeader) {
+        res.setHeader(PAYMENT_RESPONSE_HEADER, paymentHeader);
+      }
+
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function express_middleware(
+  server: any,
+  prices: string[],
+  schemes: string[],
+  network: string,
+  payTo: string,
+): RequestHandler {
+  return expressMiddleware(server, prices, schemes, network, payTo);
 }
