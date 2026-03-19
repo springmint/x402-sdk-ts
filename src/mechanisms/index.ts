@@ -3,8 +3,8 @@
  */
 
 // permit402 scheme
-export { ExactPermitTronClientMechanism } from "./exact.js";
-export { ExactPermitEvmClientMechanism } from "./exactEvm.js";
+export { Permit402TronClientMechanism } from "./exact.js";
+export { Permit402EvmClientMechanism } from "./exactEvm.js";
 
 // exact scheme
 export { ExactTronClientMechanism } from "./nativeExactTron.js";

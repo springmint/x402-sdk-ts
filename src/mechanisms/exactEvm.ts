@@ -1,5 +1,5 @@
 /**
- * ExactPermitEvmClientMechanism - EVM client mechanism for "permit402" payment scheme
+ * Permit402EvmClientMechanism - EVM client mechanism for "permit402" payment scheme
  */
 
 import type {
@@ -25,7 +25,7 @@ import {
 /**
  * EVM client mechanism for "permit402" payment scheme
  */
-export class ExactPermitEvmClientMechanism implements ClientMechanism {
+export class Permit402EvmClientMechanism implements ClientMechanism {
   private signer: ClientSigner;
   private addressConverter = new EvmAddressConverter();
 

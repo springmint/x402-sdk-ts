@@ -3,9 +3,9 @@ import { config as loadEnv } from "dotenv";
 import { Facilitator } from "../../server/facilitator";
 import { type ServerMechanism, X402Server } from "../../server/x402Server";
 import { EvmClientSigner } from "../../signers/evmSigner";
-import { x402_protected, type MiddlewareRequestLike } from "../middleware";
+import { x402_protected, type MiddlewareRequestLike, type NodeResponseLike } from "../middleware";
 import { X402Client } from "../../client";
-import { ExactPermitEvmClientMechanism, SCHEMES, X402FetchClient } from "../..";
+import { Permit402EvmClientMechanism, SCHEMES, X402FetchClient } from "../..";
 import { resolve } from "node:path";
 
 loadEnv({ path: resolve(__dirname, "../../../.env") });
@@ -45,7 +45,7 @@ describe("x402_protected", () => {
     server.register(TEST_NETWORK, serverMechanism);
 
     const x402Client = new X402Client();
-    const clientMechanism = new ExactPermitEvmClientMechanism(signer);
+    const clientMechanism = new Permit402EvmClientMechanism(signer);
     x402Client.register(TEST_NETWORK, clientMechanism);
 
     fetchClient = new X402FetchClient(x402Client);
@@ -75,10 +75,15 @@ describe("x402_protected", () => {
         return realFetch(input, init);
       }
 
-      return wrapped({
+      const response = await wrapped({
         url,
         headers: init?.headers,
       });
+      if (!response) {
+        throw new Error("Expected a fetch-style Response");
+      }
+
+      return response;
     });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -89,4 +94,55 @@ describe("x402_protected", () => {
     expect(response.status).toBe(200);
     expect(body.data).toBe("secret");
   }, 0);
+
+  it("supports Express style direct middleware usage", async () => {
+    const middleware = x402_protected(server, ["0.01 USDC"], [SCHEMES.permit402], TEST_NETWORK, TEST_PAY_TO);
+
+    const next = vi.fn();
+    const res: NodeResponseLike = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+      end: vi.fn(),
+    };
+
+    await middleware(
+      {
+        url: "https://example.com/api/protected",
+      },
+      res,
+      next,
+    );
+
+    expect(next).not.toHaveBeenCalled();
+    const [statusCode] = (res.status as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(typeof statusCode).toBe("number");
+    expect(statusCode).toBeGreaterThanOrEqual(400);
+    expect(res.setHeader).toHaveBeenCalled();
+  });
+
+  it("supports Express style middleware returned by decorator", async () => {
+    const decorator = x402_protected(server, ["0.01 USDC"], [SCHEMES.permit402], TEST_NETWORK, TEST_PAY_TO);
+    const wrapped = decorator(async () => ({ message: "private data" }));
+
+    const res: NodeResponseLike = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+      end: vi.fn(),
+    };
+
+    await wrapped(
+      {
+        url: "https://example.com/api/paid-endpoint",
+      },
+      res,
+      vi.fn(),
+    );
+
+    const [statusCode] = (res.status as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(typeof statusCode).toBe("number");
+    expect(statusCode).toBeGreaterThanOrEqual(400);
+    expect(res.send).toHaveBeenCalled();
+  });
 });
